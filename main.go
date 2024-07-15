@@ -4,6 +4,8 @@ import (
 	"github.com/hajimehoshi/ebiten"
 )
 
+const title = "Icosahedron Games: Tower Defense"
+
 type Game struct{}
 
 func (g *Game) Update(screen *ebiten.Image) error {
@@ -23,7 +25,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func main() {
 	ebiten.SetWindowSize(640, 400)
-	ebiten.SetWindowTitle("title")
+	ebiten.SetWindowTitle(title)
 	game := &Game{}
 	if err := ebiten.RunGame(game); err != nil {
 		panic(err)
