@@ -27,6 +27,7 @@ import (
 	eimage "github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/input"
 	"github.com/ebitenui/ebitenui/widget"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten/v2"
 
@@ -53,13 +54,51 @@ func main() {
 			showFPS: false,
 			vSynch:  ebiten.IsVsyncEnabled(),
 		},
+		player: NewPlayer(),
 	}
 	g.ui = g.getEbitenUI()
+	v := mgl32.Vec2{}
+	fmt.Printf("%f\n", v[0])
 
 	ebiten.SetWindowSize(screenWidth, screenHeight)
 	ebiten.SetWindowTitle(title)
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
+	}
+}
+
+type Player struct {
+	position mgl32.Vec2
+}
+
+func NewPlayer() Player {
+	return Player{
+		mgl32.Vec2{0, 0},
+	}
+}
+
+func (player *Player) UpdatePlayer() {
+	var movementSpeed float32 = 1.0
+
+	if inpututil.KeyPressDuration(ebiten.KeyW) > 0 {
+		player.position = player.position.Add(mgl32.Vec2{0, -1}.Mul(movementSpeed))
+		log.Println("Up")
+		log.Println("Position {", player.position[0], ",", player.position[1], "}")
+	}
+	if inpututil.KeyPressDuration(ebiten.KeyS) > 0 {
+		player.position = player.position.Add(mgl32.Vec2{0, 1}.Mul(movementSpeed))
+		log.Println("Down")
+		log.Println("Position {", player.position[0], ",", player.position[1], "}")
+	}
+	if inpututil.KeyPressDuration(ebiten.KeyA) > 0 {
+		player.position = player.position.Add(mgl32.Vec2{-1, 0}.Mul(movementSpeed))
+		log.Println("Left")
+		log.Println("Position {", player.position[0], ",", player.position[1], "}")
+	}
+	if inpututil.KeyPressDuration(ebiten.KeyD) > 0 {
+		player.position = player.position.Add(mgl32.Vec2{1, 0}.Mul(movementSpeed))
+		log.Println("Right")
+		log.Println("Position {", player.position[0], ",", player.position[1], "}")
 	}
 }
 
@@ -80,6 +119,7 @@ type Game struct {
 	headerLbl *widget.Text
 	settings  *Settings
 	window    Window
+	player    Player
 }
 
 type Settings struct {
@@ -90,6 +130,7 @@ type Settings struct {
 func (g *Game) Update() error {
 	// Ensure that the UI is updated to receive events
 	g.ui.Update()
+	g.player.UpdatePlayer()
 
 	// Update the Label text to indicate if the ui is currently being hovered over or not
 	g.headerLbl.Label = fmt.Sprintf("Game Demo!\nUI is hovered: %t", input.UIHovered)
@@ -353,7 +394,8 @@ func (g *Game) drawGameWorld(screen *ebiten.Image) {
 		for i, t := range l {
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Translate(float64((i%tileMapWidth)*tileSize), float64((i/tileMapWidth)*tileSize))
-			op.GeoM.Scale(2, 2)
+			op.GeoM.Translate(float64(-g.player.position[0]), float64(-g.player.position[1]))
+			op.GeoM.Scale(4, 4)
 
 			sx := (t % tileXCount) * tileSize
 			sy := (t / tileXCount) * tileSize
@@ -408,7 +450,7 @@ func getLayers() [][]int {
 
 			0, 0, 0, 0, 0, 0, 0, 245, 242, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 245, 242, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 245, 242, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 245, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 245, 242, 0, 0, 0, 0, 0, 0,
 		},
 	}
