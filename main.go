@@ -51,6 +51,7 @@ func main() {
 		tilesImage: getTileImage(),
 		settings: &Settings{
 			showFPS: false,
+			vSynch:  ebiten.IsVsyncEnabled(),
 		},
 	}
 	g.ui = g.getEbitenUI()
@@ -83,6 +84,7 @@ type Game struct {
 
 type Settings struct {
 	showFPS bool
+	vSynch  bool
 }
 
 func (g *Game) Update() error {
@@ -154,9 +156,11 @@ func openMainMenu(g *Game) {
 		),
 	)
 
+	// Show FPS setting
 	cb1 := widget.NewLabeledCheckbox(
 		widget.LabeledCheckboxOpts.Spacing(res.checkbox.spacing),
 		widget.LabeledCheckboxOpts.CheckboxOpts(
+			widget.CheckboxOpts.InitialState(boolToCheck(g.settings.showFPS)),
 			widget.CheckboxOpts.ButtonOpts(widget.ButtonOpts.Image(res.checkbox.image)),
 			widget.CheckboxOpts.Image(res.checkbox.graphic),
 			widget.CheckboxOpts.StateChangedHandler(func(args *widget.CheckboxChangedEventArgs) {
@@ -168,11 +172,25 @@ func openMainMenu(g *Game) {
 			})),
 		widget.LabeledCheckboxOpts.LabelOpts(widget.LabelOpts.Text("Show FPS", face, res.label.text)))
 
-	if g.settings.showFPS {
-		cb1.SetState(widget.WidgetChecked)
-	}
-
 	c.AddChild(cb1)
+
+	// VSync
+	cb2 := widget.NewLabeledCheckbox(
+		widget.LabeledCheckboxOpts.Spacing(res.checkbox.spacing),
+		widget.LabeledCheckboxOpts.CheckboxOpts(
+			widget.CheckboxOpts.InitialState(boolToCheck(g.settings.vSynch)),
+			widget.CheckboxOpts.ButtonOpts(widget.ButtonOpts.Image(res.checkbox.image)),
+			widget.CheckboxOpts.Image(res.checkbox.graphic),
+			widget.CheckboxOpts.StateChangedHandler(func(args *widget.CheckboxChangedEventArgs) {
+				if g.settings.vSynch {
+					g.settings.vSynch = false
+				} else {
+					g.settings.vSynch = true
+				}
+			})),
+		widget.LabeledCheckboxOpts.LabelOpts(widget.LabelOpts.Text("VSynch", face, res.label.text)))
+
+	c.AddChild(cb2)
 
 	bc := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
@@ -204,6 +222,13 @@ func openMainMenu(g *Game) {
 	rw = g.ui.AddWindow(window)
 }
 
+func boolToCheck(test bool) widget.WidgetState {
+	if test {
+		return widget.WidgetChecked
+	}
+	return widget.WidgetUnchecked
+}
+
 func (g *Game) Draw(screen *ebiten.Image) {
 	// Draw the tilemap
 	g.drawGameWorld(screen)
@@ -213,6 +238,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.settings.showFPS {
 		ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %f", ebiten.ActualFPS()))
 	}
+	ebiten.SetVsyncEnabled(g.settings.vSynch)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
