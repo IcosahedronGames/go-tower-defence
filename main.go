@@ -60,6 +60,7 @@ func main() {
 	v := mgl32.Vec2{}
 	fmt.Printf("%f\n", v[0])
 
+	ebiten.SetTPS(60)
 	ebiten.SetWindowSize(screenWidth, screenHeight)
 	ebiten.SetWindowTitle(title)
 	if err := ebiten.RunGame(g); err != nil {
@@ -77,27 +78,29 @@ func NewPlayer() Player {
 	}
 }
 
-func (player *Player) UpdatePlayer() {
-	var movementSpeed float32 = 1.0
+func (player *Player) UpdatePlayer(deltaTime float32) {
+	// Game units / second
+	var movementSpeed float32 = 100
+
+	var movementDir = mgl32.Vec2{0, 0}
 
 	if inpututil.KeyPressDuration(ebiten.KeyW) > 0 {
-		player.position = player.position.Add(mgl32.Vec2{0, -1}.Mul(movementSpeed))
-		log.Println("Up")
-		log.Println("Position {", player.position[0], ",", player.position[1], "}")
+		movementDir = movementDir.Add(mgl32.Vec2{0, -1})
 	}
 	if inpututil.KeyPressDuration(ebiten.KeyS) > 0 {
-		player.position = player.position.Add(mgl32.Vec2{0, 1}.Mul(movementSpeed))
-		log.Println("Down")
-		log.Println("Position {", player.position[0], ",", player.position[1], "}")
+		movementDir = movementDir.Add(mgl32.Vec2{0, 1})
 	}
 	if inpututil.KeyPressDuration(ebiten.KeyA) > 0 {
-		player.position = player.position.Add(mgl32.Vec2{-1, 0}.Mul(movementSpeed))
-		log.Println("Left")
-		log.Println("Position {", player.position[0], ",", player.position[1], "}")
+		movementDir = movementDir.Add(mgl32.Vec2{-1, 0})
 	}
 	if inpututil.KeyPressDuration(ebiten.KeyD) > 0 {
-		player.position = player.position.Add(mgl32.Vec2{1, 0}.Mul(movementSpeed))
-		log.Println("Right")
+		movementDir = movementDir.Add(mgl32.Vec2{1, 0})
+	}
+
+	if movementDir[0] != float32(0) || movementDir[1] != float32(0) {
+		movementDir = movementDir.Normalize()
+		var frameDisplacement = movementDir.Mul(movementSpeed * deltaTime)
+		player.position = player.position.Add(frameDisplacement)
 		log.Println("Position {", player.position[0], ",", player.position[1], "}")
 	}
 }
@@ -110,6 +113,11 @@ const (
 	None     Window = "none"
 )
 
+type PerFrame struct {
+	deltaTime32 float32
+	deltaTime64 float64
+}
+
 // God class
 type Game struct {
 	tilesImage *ebiten.Image
@@ -120,6 +128,7 @@ type Game struct {
 	settings  *Settings
 	window    Window
 	player    Player
+	perFrame  PerFrame
 }
 
 type Settings struct {
@@ -130,7 +139,10 @@ type Settings struct {
 func (g *Game) Update() error {
 	// Ensure that the UI is updated to receive events
 	g.ui.Update()
-	g.player.UpdatePlayer()
+	g.perFrame.deltaTime64 = 1.0 / ebiten.ActualTPS()
+	g.perFrame.deltaTime64 = max(0.001, g.perFrame.deltaTime64)
+	g.perFrame.deltaTime32 = float32(g.perFrame.deltaTime64)
+	g.player.UpdatePlayer(g.perFrame.deltaTime32)
 
 	// Update the Label text to indicate if the ui is currently being hovered over or not
 	g.headerLbl.Label = fmt.Sprintf("Game Demo!\nUI is hovered: %t", input.UIHovered)
