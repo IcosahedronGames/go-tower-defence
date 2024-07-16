@@ -30,6 +30,7 @@ import (
 	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten/v2"
 
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/images"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"golang.org/x/image/font"
@@ -48,6 +49,9 @@ func main() {
 	g := &Game{
 		layers:     getLayers(),
 		tilesImage: getTileImage(),
+		settings: &Settings{
+			showFPS: false,
+		},
 	}
 	g.ui = g.getEbitenUI()
 
@@ -64,6 +68,11 @@ type Game struct {
 
 	ui        *ebitenui.UI
 	headerLbl *widget.Text
+	settings  *Settings
+}
+
+type Settings struct {
+	showFPS bool
 }
 
 func (g *Game) Update() error {
@@ -80,13 +89,13 @@ func (g *Game) Update() error {
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		log.Println("Escape is pressed")
-		openMainMenu(g.ui)
+		openMainMenu(g)
 	}
 
 	return nil
 }
 
-func openMainMenu(ui *ebitenui.UI) {
+func openMainMenu(g *Game) {
 	res, _ := newUIResources()
 	var rw widget.RemoveWindowFunc
 	var window *widget.Window
@@ -130,9 +139,21 @@ func openMainMenu(ui *ebitenui.UI) {
 		),
 	)
 
-	c.AddChild(widget.NewText(
-		widget.TextOpts.Text("This window blocks all input to widgets below it.", face, res.text.idleColor),
-	))
+	cb1 := widget.NewLabeledCheckbox(
+		widget.LabeledCheckboxOpts.Spacing(res.checkbox.spacing),
+		widget.LabeledCheckboxOpts.CheckboxOpts(
+			widget.CheckboxOpts.ButtonOpts(widget.ButtonOpts.Image(res.checkbox.image)),
+			widget.CheckboxOpts.Image(res.checkbox.graphic),
+			widget.CheckboxOpts.StateChangedHandler(func(args *widget.CheckboxChangedEventArgs) {
+				if g.settings.showFPS {
+					g.settings.showFPS = false
+				} else {
+					g.settings.showFPS = true
+				}
+			})),
+		widget.LabeledCheckboxOpts.LabelOpts(widget.LabelOpts.Text("Show FPS", face, res.label.text)))
+
+	c.AddChild(cb1)
 
 	bc := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
@@ -161,7 +182,7 @@ func openMainMenu(ui *ebitenui.UI) {
 	r = r.Add(image.Point{windowSize.X / 4 / 2, windowSize.Y * 2 / 3 / 2})
 	window.SetLocation(r)
 
-	rw = ui.AddWindow(window)
+	rw = g.ui.AddWindow(window)
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -169,6 +190,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.drawGameWorld(screen)
 	// Ensure ui.Draw is called after the gameworld is drawn
 	g.ui.Draw(screen)
+	// Print FPS on screen
+	if g.settings.showFPS {
+		ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %f", ebiten.ActualFPS()))
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {

@@ -39,6 +39,8 @@ type uiResources struct {
 	background *image.NineSlice
 	text       *textResources
 	button     *buttonResources
+	checkbox   *checkboxResources
+	label      *labelResources
 	panel      *panelResources
 	textInput  *textInputResources
 }
@@ -54,6 +56,16 @@ type buttonResources struct {
 	padding widget.Insets
 }
 
+type checkboxResources struct {
+	image   *widget.ButtonImage
+	graphic *widget.CheckboxGraphicImage
+	spacing int
+}
+
+type labelResources struct {
+	text *widget.LabelColor
+}
+
 type panelResources struct {
 	padding widget.Insets
 }
@@ -67,6 +79,11 @@ func newUIResources() (*uiResources, error) {
 	background := image.NewNineSliceColor(hexToColor(backgroundColor))
 
 	button, err := newButtonResources()
+	if err != nil {
+		return nil, err
+	}
+
+	checkbox, err := newCheckboxResources()
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +105,8 @@ func newUIResources() (*uiResources, error) {
 			disabledColor: hexToColor(textDisabledColor),
 		},
 		button:    button,
+		label:     newLabelResources(),
+		checkbox:  checkbox,
 		panel:     panel,
 		textInput: textInput,
 	}, nil
@@ -139,6 +158,65 @@ func newButtonResources() (*buttonResources, error) {
 		},
 	}, nil
 }
+
+func newLabelResources() *labelResources {
+	return &labelResources{
+		text: &widget.LabelColor{
+			Idle:     hexToColor(labelIdleColor),
+			Disabled: hexToColor(labelDisabledColor),
+		},
+	}
+}
+
+func newCheckboxResources() (*checkboxResources, error) {
+	idle, err := loadImageNineSlice("assets/graphics/checkbox-idle.png", 20, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	hover, err := loadImageNineSlice("assets/graphics/checkbox-hover.png", 20, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	disabled, err := loadImageNineSlice("assets/graphics/checkbox-disabled.png", 20, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	checked, err := loadGraphicImages("assets/graphics/checkbox-checked-idle.png", "assets/graphics/checkbox-checked-disabled.png")
+	if err != nil {
+		return nil, err
+	}
+
+	unchecked, err := loadGraphicImages("assets/graphics/checkbox-unchecked-idle.png", "assets/graphics/checkbox-unchecked-disabled.png")
+	if err != nil {
+		return nil, err
+	}
+
+	greyed, err := loadGraphicImages("assets/graphics/checkbox-greyed-idle.png", "assets/graphics/checkbox-greyed-disabled.png")
+	if err != nil {
+		return nil, err
+	}
+
+	return &checkboxResources{
+		image: &widget.ButtonImage{
+			Idle:     idle,
+			Hover:    hover,
+			Pressed:  hover,
+			Disabled: disabled,
+		},
+
+		graphic: &widget.CheckboxGraphicImage{
+			Checked:   checked,
+			Unchecked: unchecked,
+			Greyed:    greyed,
+		},
+
+		spacing: 10,
+	}, nil
+}
+
 func newPanelResources() (*panelResources, error) {
 	return &panelResources{
 		padding: widget.Insets{

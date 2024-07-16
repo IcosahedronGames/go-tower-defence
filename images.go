@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/ebitenui/ebitenui/image"
+	"github.com/ebitenui/ebitenui/widget"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
@@ -15,6 +16,27 @@ func newImageFromFile(path string) (*ebiten.Image, error) {
 	i, _, err := ebitenutil.NewImageFromReader(f)
 	return i, err
 }
+
+func loadGraphicImages(idle string, disabled string) (*widget.ButtonImageImage, error) {
+	idleImage, err := newImageFromFile(idle)
+	if err != nil {
+		return nil, err
+	}
+
+	var disabledImage *ebiten.Image
+	if disabled != "" {
+		disabledImage, err = newImageFromFile(disabled)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &widget.ButtonImageImage{
+		Idle:     idleImage,
+		Disabled: disabledImage,
+	}, nil
+}
+
 func loadImageNineSlice(path string, centerWidth int, centerHeight int) (*image.NineSlice, error) {
 	i, err := newImageFromFile(path)
 	if err != nil {
