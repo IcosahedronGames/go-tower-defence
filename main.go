@@ -375,6 +375,8 @@ func (g *Game) drawGameWorld(screen *ebiten.Image) {
 		for i, t := range l {
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Translate(float64((i%tileMapWidth)*tileSize), float64((i/tileMapWidth)*tileSize))
+			// Translate game world inverse to player position
+			// so it moves in opposite direction
 			op.GeoM.Translate(float64(-g.player.position[0]), float64(-g.player.position[1]))
 			op.GeoM.Scale(4, 4)
 
