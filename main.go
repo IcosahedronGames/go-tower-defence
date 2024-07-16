@@ -62,6 +62,15 @@ func main() {
 	}
 }
 
+// Enum of windows that can be open
+type Window string
+
+const (
+	MainMenu Window = "mainMenu"
+	None     Window = "none"
+)
+
+// God class
 type Game struct {
 	tilesImage *ebiten.Image
 	layers     [][]int
@@ -69,6 +78,7 @@ type Game struct {
 	ui        *ebitenui.UI
 	headerLbl *widget.Text
 	settings  *Settings
+	window    Window
 }
 
 type Settings struct {
@@ -89,12 +99,16 @@ func (g *Game) Update() error {
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		log.Println("Escape is pressed")
-		openMainMenu(g)
+		if g.window != MainMenu {
+			g.window = MainMenu
+			openMainMenu(g)
+		}
 	}
 
 	return nil
 }
 
+// Open the main menu, triggered by pressing escape key
 func openMainMenu(g *Game) {
 	res, _ := newUIResources()
 	var rw widget.RemoveWindowFunc
@@ -122,6 +136,7 @@ func openMainMenu(g *Game) {
 		widget.ButtonOpts.TextPadding(res.button.padding),
 		widget.ButtonOpts.Text("X", face, res.button.text),
 		widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
+			g.window = None
 			rw()
 		}),
 		widget.ButtonOpts.TabOrder(99),
@@ -152,6 +167,10 @@ func openMainMenu(g *Game) {
 				}
 			})),
 		widget.LabeledCheckboxOpts.LabelOpts(widget.LabelOpts.Text("Show FPS", face, res.label.text)))
+
+	if g.settings.showFPS {
+		cb1.SetState(widget.WidgetChecked)
+	}
 
 	c.AddChild(cb1)
 
