@@ -115,11 +115,10 @@ type Game struct {
 	tilesImage *ebiten.Image
 	layers     [][]int
 
-	ui        *ebitenui.UI
-	headerLbl *widget.Text
-	settings  *Settings
-	window    Window
-	player    Player
+	ui       *ebitenui.UI
+	settings *Settings
+	window   Window
+	player   Player
 }
 
 type Settings struct {
@@ -131,9 +130,6 @@ func (g *Game) Update() error {
 	// Ensure that the UI is updated to receive events
 	g.ui.Update()
 	g.player.UpdatePlayer()
-
-	// Update the Label text to indicate if the ui is currently being hovered over or not
-	g.headerLbl.Label = fmt.Sprintf("Game Demo!\nUI is hovered: %t", input.UIHovered)
 
 	// Log out if we have clicked on the gamefield and NOT the ui
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) && !input.UIHovered {
@@ -312,21 +308,6 @@ func (g *Game) getEbitenUI() *ebitenui.UI {
 		widget.ContainerOpts.Layout(widget.NewAnchorLayout()),
 	)
 
-	g.headerLbl = widget.NewText(
-		widget.TextOpts.Text("Game Demo!", face, color.White),
-		widget.TextOpts.Position(widget.TextPositionCenter, widget.TextPositionCenter),
-		widget.TextOpts.WidgetOpts(
-			widget.WidgetOpts.LayoutData(widget.AnchorLayoutData{
-				VerticalPosition:   widget.AnchorLayoutPositionStart,
-				HorizontalPosition: widget.AnchorLayoutPositionCenter,
-				StretchHorizontal:  false,
-				StretchVertical:    false,
-			}),
-			// Uncomment to force tracking hover of this element
-			// widget.WidgetOpts.TrackHover(true),
-		),
-	)
-	headerContainer.AddChild(g.headerLbl)
 	rootContainer.AddChild(headerContainer)
 
 	hProgressbar := widget.NewProgressBar(
